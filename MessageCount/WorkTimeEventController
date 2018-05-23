@@ -1,0 +1,44 @@
+<!-- Once the user enters their user ID, it will be checked to see if there are any messages available. -->
+ 
+ 
+ public JsonResult CheckForUserData(string userdata) // userdata comes from function UserCheck() on Login.cshtml
+        {
+            // Checks Db users where the UserName == the username that was inputted by the user and stores EVERYTHING about that user
+            var searchData = db.Users.Where(x => x.UserName == userdata).SingleOrDefault();
+            var count = searchData.MessageCount;
+
+
+            if (searchData != null)
+            {
+                // Look at the Db events, grab only events that matched the userID && had a start day with todays date
+                var todaysWorkTimeEvents = db.WorkTimeEvents.Where(u => u.Id == searchData.Id).Where(e => e.Start.Day == DateTime.Today.Day).ToList();
+
+                //checks to see if there is a new message for the user 
+                var messages = count > 0;
+                db.SaveChanges();
+                ModelState.Clear();
+                ModelState.AddModelError("", "You have unread messages");
+             
+                
+                // Grabs Db event that doesn't have an end value and matches user ID
+                var notFinishedEvent = db.WorkTimeEvents.FirstOrDefault(x => x.Id == searchData.Id && !x.End.HasValue);
+                
+                if (notFinishedEvent != null)
+                { 
+                    // UserVerification (2) means there's a start time, but no end time
+                    return Json(new WorkTimeEventCreateViewModel(2, todaysWorkTimeEvents, messages), JsonRequestBehavior.AllowGet);
+                }
+                else
+                {
+                    // UserVerification (1) means there's no start or end time
+                    return Json(new WorkTimeEventCreateViewModel(1, todaysWorkTimeEvents, messages), JsonRequestBehavior.AllowGet);
+                }
+
+          
+            }
+            else
+            {
+                // UserVerification (0) means the current user is not in our Db
+                return Json(new WorkTimeEventCreateViewModel(0), JsonRequestBehavior.AllowGet);
+            }
+        }
