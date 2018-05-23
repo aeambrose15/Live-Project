@@ -1,0 +1,61 @@
+<!-- TimeOffEvent Controller showing if a time off request is approved or denied, then the user will have a message available to view. -->
+
+namespace ScheduleUsers.Areas.Employer.Controllers
+{
+    [Authorize(Roles = "Admin")]
+    public class TimeOffEventController : Controller
+    {
+        private ApplicationDbContext db = new ApplicationDbContext();
+
+        // GET: Employer/TimeOffEvent
+        public ActionResult Index()
+        {
+          
+            var timeOffEvents = db.TimeOffEvents.Where(x => x.ApproverId == null).OrderBy(a => a.Start);
+            return View(timeOffEvents.ToList());
+        }
+
+        // GET: Employer/ProcessedRequestsIndex
+        public ActionResult ProcessedRequestsIndex()
+        {
+            var timeOffEvents = db.TimeOffEvents.Where(x => x.ApproverId != null).OrderBy(a => a.Start);
+            return PartialView("_ProcessedRequestsIndex",timeOffEvents.ToList());
+            
+        }
+
+        public ActionResult Approve(Guid id)
+        {
+            var Approve = db.TimeOffEvents.Find(id);
+            ApplicationUser user = db.Users.Find(Approve.User.Id);
+            user.MessageCount++;
+            Approve.ActiveSchedule = true;
+            var approver = User.Identity.GetUserId();
+            Approve.ApproverId = approver;
+            db.SaveChanges();
+            return RedirectToAction("Index");
+            
+
+        }
+
+        public ActionResult Deny(Guid id)
+        {
+            var Deny = db.TimeOffEvents.Find(id);
+            ApplicationUser user = db.Users.Find(Deny.User.Id);
+            user.MessageCount++;
+            Deny.ActiveSchedule = false;
+            var approver = User.Identity.GetUserId();
+            Deny.ApproverId = approver;
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+    }
+}
