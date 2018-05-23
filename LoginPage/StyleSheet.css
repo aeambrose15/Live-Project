@@ -1,0 +1,58 @@
+<!-- Simple CSS added to center the text and login on the page, and enhance the features of the login and clock out buttons. -->
+
+
+body {
+   
+}
+
+.form-check-label {
+    text-align:center;
+}
+
+.form-group{
+    text-align:center;
+
+}
+
+
+.login-button {
+    background-color: #191970;
+    border: solid;
+    border-color: darkorange;
+    border-width: 4px;
+    border-radius: 4px;
+    color: white;
+    padding: 10px 23px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 2px 1px;
+    cursor: pointer;
+}
+
+.login-button:hover {
+        background-color: #fff;
+        color: darkblue;
+    }
+
+.clockout-button {
+    background-color: darkorange;
+    border: solid;
+    border-color: #191970;
+    border-width: 4px;
+    border-radius: 4px;
+    color: white;
+    padding: 10px 23px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 2px 1px;
+    cursor: pointer;
+}
+
+    .clockout-button:hover {
+        background-color: #fff;
+        color: darkorange;
+    }
