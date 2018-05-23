@@ -1,0 +1,147 @@
+<!-- TimeOffEvent Controller showing Create, Edit, Delete, Approve and Deny buttons with their functionality. 
+Also, added the Admin ApproverID to each time off request.-->
+
+namespace ScheduleUsers.Areas.Employer.Controllers
+{
+    [Authorize(Roles = "Admin")]
+    public class TimeOffEventController : Controller
+    {
+        private ApplicationDbContext db = new ApplicationDbContext();
+
+        // GET: Employer/TimeOffEvent
+        public ActionResult Index()
+        {
+          
+            var timeOffEvents = db.TimeOffEvents.Where(x => x.ApproverId == null).OrderBy(a => a.Start);
+            return View(timeOffEvents.ToList());
+        }
+
+        // GET: Employer/ProcessedRequestsIndex
+        public ActionResult ProcessedRequestsIndex()
+        {
+            var timeOffEvents = db.TimeOffEvents.Where(x => x.ApproverId != null).OrderBy(a => a.Start);
+            return PartialView("_ProcessedRequestsIndex",timeOffEvents.ToList());
+            
+        }
+
+        // GET: TimeOffEvent/Create
+        public ActionResult Create()
+        {
+            ViewBag.Id = new SelectList(db.Users, "Id", "FirstName");
+            return View();
+        }
+
+        // POST: TimeOffEvent/Create
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
+        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Create([Bind(Include = "EventID,Start,End,Note,Title,ActiveSchedule,Id")] TimeOffEvent timeOffEvent)
+        {
+            if (ModelState.IsValid)
+            {
+                timeOffEvent.EventID = Guid.NewGuid();
+                db.TimeOffEvents.Add(timeOffEvent);
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.Id = new SelectList(db.Users, "Id", "FirstName", timeOffEvent.Id);
+            return PartialView(timeOffEvent);
+        }
+
+        // GET: TimeOffEvent/Edit/5
+        public ActionResult Edit(Guid? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            TimeOffEvent timeOffEvent = db.TimeOffEvents.Find(id);
+            if (timeOffEvent == null)
+            {
+                return HttpNotFound();
+            }
+            ViewBag.Id = new SelectList(db.Users, "Id", "FirstName", timeOffEvent.Id);
+            return View(timeOffEvent);
+        }
+
+        // POST: TimeOffEvent/Edit/5
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
+        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit([Bind(Include = "EventID,Start,End,Note,Title,ActiveSchedule,Id")] TimeOffEvent timeOffEvent)
+        {
+            if (ModelState.IsValid)
+            {
+                db.Entry(timeOffEvent).State = EntityState.Modified;
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            ViewBag.Id = new SelectList(db.Users, "Id", "FirstName", timeOffEvent.Id);
+            return View(timeOffEvent);
+        }
+
+        // GET: TimeOffEvent/Delete/5
+        public ActionResult Delete(Guid? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            TimeOffEvent timeOffEvent = db.TimeOffEvents.Find(id);
+            if (timeOffEvent == null)
+            {
+                return HttpNotFound();
+            }
+            return View(timeOffEvent);
+        }
+
+        // POST: TimeOffEvent/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public ActionResult DeleteConfirmed(Guid id)
+        {
+            TimeOffEvent timeOffEvent = db.TimeOffEvents.Find(id);
+            db.TimeOffEvents.Remove(timeOffEvent);
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        public ActionResult Approve(Guid id)
+        {
+            var Approve = db.TimeOffEvents.Find(id);
+            ApplicationUser user = db.Users.Find(Approve.User.Id);
+            user.MessageCount++;
+            Approve.ActiveSchedule = true;
+            var approver = User.Identity.GetUserId();
+            Approve.ApproverId = approver;
+            db.SaveChanges();
+            return RedirectToAction("Index");
+            
+
+        }
+
+        public ActionResult Deny(Guid id)
+        {
+            var Deny = db.TimeOffEvents.Find(id);
+            ApplicationUser user = db.Users.Find(Deny.User.Id);
+            user.MessageCount++;
+            Deny.ActiveSchedule = false;
+            var approver = User.Identity.GetUserId();
+            Deny.ApproverId = approver;
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+    }
+}
