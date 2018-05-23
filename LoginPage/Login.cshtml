@@ -1,0 +1,108 @@
+<!-- Login page created and updated with CSS.  -->
+
+@{
+    ViewBag.Title = "Log in";
+}
+
+<br />
+<br />
+
+<div class="row">
+    <div class="col-md-8">
+        <div align="center" style="margin-left:300px" class="row-fluid">
+            <section id="loginForm" style="margin-left:300px, auto">
+                <img src="~/Images/The-Tech-Academy-Logo.png" />
+
+                @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+    {
+            @Html.AntiForgeryToken()
+
+            <hr />
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+            <div class="form-group">
+                @Html.LabelFor(m => m.Email, new { @class = "col-md-2 control-label" })
+                <div class="col-md-10">
+                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", id = "UserName", onchange = "UserCheck()" })
+                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.Password, new { @class = "col-md-2 control-label" })
+                <div class="col-md-10">
+                    @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="submit" class="clockin-button" value="Clock In" formaction=@Url.Action("Create", "WorkTimeEvent") formmethod="post" class="btn btn-default" id="clockInOutBtn" />
+                    <input type="submit" class="login-button" value="Log In" />
+                </div>
+            </div>
+            
+                <div class="form-group">
+                    <input type="checkbox" class="form-group-input" id="exampleCheck1">
+                    <label class="form-check-label" for="exampleCheck1">Remember Me</label>
+                </div>
+
+
+                <div id="currentWorkTimeEventHours"></div>
+
+                @* Enable this once you have account confirmation enabled for password reset functionality
+        <p>
+            @Html.ActionLink("Forgot your password?", "ForgotPassword")
+        </p>*@
+                }
+</section>
+        </div>
+        <div class="col-md-4">
+            <section id="socialLoginForm">
+                @* @Html.Partial("_ExternalLoginsListPartial", new ExternalLoginListViewModel { ReturnUrl = ViewBag.ReturnUrl })*@
+            </section>
+        </div>
+    </div>
+    </div>
+
+
+
+@******************************************************************************
+  *                       CHECK USER NAME AVAILABILITY
+  ************************************************************************** *@
+<script>
+    function UserCheck() {
+        $.post("@Url.Action("CheckForUserData", "WorkTimeEvent")",
+            {
+                userdata: $("#UserName").val()
+            },
+            function (data) {
+                @* Username is not in the Db, display text box red and keep btn disabled *@
+                if (data.UserVerification == 0) {
+                    $("#clockInOutBtn").prop('disabled', true).html('Clock in');
+                    $("#UserName").css("border-color", "Red");
+
+                }
+                @* Username is in the Db && doesn't have a start or end time, change btn to display Clock in *@
+                else if (data.UserVerification == 1) {
+                    $("#clockInOutBtn").prop('disabled', false).html('Clock in');
+                    $("#UserName").css("border-color", "Green");
+                    $("#currentWorkTimeEventHours").html(data.ClockInOut);
+                    $("#currentWorkTimeEvent").html(data.userdata);
+                }
+                @* Username is in the Db && doesn't have an end time, change btn to display Clock out *@
+                else {  // data == 2
+                    $("#clockInOutBtn").prop('disabled', false).val('Clock out');
+                    $("#UserName").css("border-color", "Green");
+                    $("#currentWorkTimeEventHours").html(data.ClockInOut);
+                    $("#currentWorkTimeEvent").html(data.userdata);
+                }
+            });
+    }
+
+</script>
+
+
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
